@@ -12,9 +12,11 @@ class unit{
 	public $atkAbility;//攻击能力
 	public $critical;//暴击
 	public $damageResist;//防御能力
+
 	public $skillPower;//主动技能	
 	public $passiveSkill;//被动威力
 	public $buffMagic;//持续效果以及回合数
+
 	public $spellStrength;//法术强度 治疗量
 	public $ranseSE;//对种族特效
 	public function __construct(){
@@ -23,7 +25,7 @@ class unit{
 		$this->critical=new critical();
 		$this->damageResist=new damageResist();
 
-		$this->skillPower=array();//需要另行写入数组单元+
+		$this->skillPower=array();//需要另行写入数组单元
 		$this->passiveSkill=array();//同上
 		$this->buffMagic=array();//同上
 		
@@ -40,7 +42,6 @@ class unit{
 //unit子类 战斗状态
 class battleState{
 	public $position;
-	public $live;
 	public $attackType;
 	public $state;
 }
@@ -75,6 +76,8 @@ class skillPower{
 		$this->times=$times;
 	}
 }
+//unit数组单元子类 buff技能
+}
 //unit数组单元子类 被动技能
 class passiveSkill{
 	public $level;//被动技能等级
@@ -82,13 +85,12 @@ class passiveSkill{
 		$this->level=$level;
 	}
 }
-//unit数组单元子类 被动技能
+//unit数组单元子类 buff效果
+}
 class buffMagic{
-	public $store;//次数
 	public $level;//等级强度
 	public $resist;//抵抗
 	public $roundTime;//剩余时间
-
 }
 
 
@@ -103,8 +105,8 @@ $npc->hp=$npc->mahp=100;
 $npc->speed=12;
 
 $npc->battleState->position='front';
-$npc->battleState->live='live';
 $npc->battleState->attackType='bayonet';
+$npc->battleState->state='live';
 
 $npc->atkAbility->damage=10;
 $npc->atkAbility->hitRate=10;
@@ -127,11 +129,15 @@ $npc->skillPower[3]=new skillPower(0,0,0);
 $npc->skillPower[4]=new skillPower(0,0,0);
 $npc->skillPower[5]=new skillPower(0,0,0);
 
+$npc->buffMagic[0]=new buffMagic(0,0);
+$npc->buffMagic[1]=new buffMagic(0,0);
+
+
+
 $npc->passiveSkill[0]=new passiveSkill(0);
 $npc->passiveSkill[1]=new passiveSkill(0);
 $npc->passiveSkill[2]=new passiveSkill(0);
 
-$npc->buffMagic[0]=new 
 
 
 /*
