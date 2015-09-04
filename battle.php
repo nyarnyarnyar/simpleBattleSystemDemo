@@ -15,10 +15,11 @@ class unit{
 
 	public $skillPower;//主动技能	
 	public $passiveSkill;//被动威力
-	public $buffMagic;//持续效果以及回合数
+	public $buff;//持续效果以及回合数
 
 	public $spellStrength;//法术强度 治疗量
 	public $ranseSE;//对种族特效
+
 	public function __construct(){
 		$this->battleState=new battleState();
 		$this->atkAbility=new atkAbility();
@@ -27,7 +28,7 @@ class unit{
 
 		$this->skillPower=array();//需要另行写入数组单元
 		$this->passiveSkill=array();//同上
-		$this->buffMagic=array();//同上
+		$this->buff=array();//同上
 		
 		$this->spellStrength=array();//直接标明法强和治疗
 		$this->ranseSE=array();//直接写入意味不明的数字，具体参与计算时要查表
@@ -76,8 +77,6 @@ class skillPower{
 		$this->times=$times;
 	}
 }
-//unit数组单元子类 buff技能
-}
 //unit数组单元子类 被动技能
 class passiveSkill{
 	public $level;//被动技能等级
@@ -86,11 +85,15 @@ class passiveSkill{
 	}
 }
 //unit数组单元子类 buff效果
-}
-class buffMagic{
-	public $level;//等级强度
+class buff{
 	public $resist;//抵抗
+	public $level;//等级强度
 	public $roundTime;//剩余时间
+	public function __construct($resist,$level,$roundTime){
+		$this->resist=$resist;
+		$this->level=$level;
+		$this->roundTime=$roundTime;
+	}
 }
 
 
@@ -122,23 +125,28 @@ $npc->damageResist->resistRate=0.05;
 $npc->damageResist->dodge=5;
 $npc->damageResist->magicResist=1;
 
-$npc->skillPower[0]=new skillPower(0,0,0);
-$npc->skillPower[1]=new skillPower(0,0,0);
-$npc->skillPower[2]=new skillPower(0,0,0);
-$npc->skillPower[3]=new skillPower(0,0,0);
-$npc->skillPower[4]=new skillPower(0,0,0);
-$npc->skillPower[5]=new skillPower(0,0,0);
-
-$npc->buffMagic[0]=new buffMagic(0,0);
-$npc->buffMagic[1]=new buffMagic(0,0);
-
-
-
-$npc->passiveSkill[0]=new passiveSkill(0);
-$npc->passiveSkill[1]=new passiveSkill(0);
-$npc->passiveSkill[2]=new passiveSkill(0);
+//导入14个技能
+for($i=0;$i<14;$i++){
+	$npc->skillPower[$i]=new skillPower(0,0,0);
+}
+//导入8个buff与debuf
+for($i=0;$i<8;$i++){
+	$npc->buff[$i]=new buff(0,0,0);
+}
+//导入4个被动
+for($i=0;$i<4;$i++){
+	$npc->passiveSkill[$i]=new passiveSkill(0);
+}
 
 
+$npc->spellStrength[0]=0;
+$npc->spellStrength[1]=0;
+
+for($i=0;$i<4;$i++){
+	$npc->ranseSE[$i]=0;
+}
+
+var_dump(get_object_vars($npc));
 
 /*
 function initialize($type,$name){
