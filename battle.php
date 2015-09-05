@@ -20,6 +20,8 @@ class unit{
 	public $spellStrength;//法术强度 治疗量
 	public $ranseSE;//对种族特效
 
+	public $initiative;//先攻
+
 	public function __construct(){
 		$this->battleState=new battleState();
 		$this->atkAbility=new atkAbility();
@@ -38,6 +40,8 @@ class unit{
 	public function HPrate(){//显示血量百分比
 		return $this->healthPoint/$this->healthPointUpper;
 	}
+
+
 }
 
 //unit子类 战斗状态
@@ -99,8 +103,9 @@ class buff{
 
 //include 'initializeAttr.php';
 
+//初始化范例单位
 $npc=new unit();
-$npc->name='123456';
+$npc->name='村民';
 $npc->side='player';
 $npc->class='commoner';
 $npc->rance='human';
@@ -146,7 +151,21 @@ for($i=0;$i<4;$i++){
 	$npc->ranseSE[$i]=0;
 }
 
-var_dump(get_object_vars($npc));
+$unitList=array();
+$actionList=array();
+for ($i=0; $i < 10; $i++) { 
+	$unitList[$i]=clone $npc;
+}
+for ($i=0; $i < 5; $i++) { 
+	$unitList[$i+5]->side='computer';
+}
+
+for ($i=0; $i < count($unitList); $i++) { 
+    $actionList[$i]=clone $unitList[$i];
+    
+}
+
+
 
 /*
 function initialize($type,$name){
