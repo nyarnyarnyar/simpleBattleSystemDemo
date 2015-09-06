@@ -143,15 +143,17 @@ for($i=0;$i<4;$i++){
 	$npc->passiveSkill[$i]=new passiveSkill(0);
 }
 
-
+//初始化法强和种族特效
 $npc->spellStrength[0]=0;
 $npc->spellStrength[1]=0;
 
 for($i=0;$i<4;$i++){
 	$npc->ranseSE[$i]=0;
 }
+//初始化战斗队伍
 
 $unitList=array();
+
 $actionList=array();
 for ($i=0; $i < 10; $i++) { 
 	$unitList[$i]=clone $npc;
@@ -163,6 +165,39 @@ for ($i=0; $i < 5; $i++) {
 for ($i=0; $i < count($unitList); $i++) { 
     $actionList[$i]=clone $unitList[$i];
     
+}
+
+/*
+第零轮
+*/
+
+
+	for ($i=0; $i < count($actionList); $i++) { 
+		$actionList[$i]->initialize=dice($actionList[$i]->speed,6);
+		echo $actionList[$i]->initialize."<br>";
+	}
+	//根据先攻值对单位进行排序，冒泡
+	for ($i=count($actionList); $i > 0; $i--) { 
+		for ($j=0; $j < $i; $j++) { 
+			if(($actionList[$j]->initialize)<($actionList[$j+1]->initialize)){
+				$part=$actionList[$j];
+				$actionList[$j]=$actionList[$j+1];
+				$actionList[$j+1]=$part;
+			}
+		}
+		# code...
+	}
+
+	for ($i=0; $i < count($actionList); $i++) { 
+		echo $actionList[$i]->initialize."<br>";
+	}
+	
+$roundTimes=20;
+while ($roundTimes--) {
+	//先攻排序
+
+
+
 }
 
 
@@ -183,4 +218,12 @@ function initialize($type,$name){
 	}
 }
 */
+function dice($number,$type){
+	$result=0;
+	for ($i=0; $i < $number; $i++) { 
+		$result+=rand(1,$type);
+	}
+	return $result;
+}
+
 ?>
