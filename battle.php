@@ -1,75 +1,73 @@
 <?php
 class unit{
 	public $name;//单位名称
-	public $side;//单位阵营
-	public $class;//职业
-	public $rance;//种族
+	public $side;//单位阵营 0 玩家 1 怪物
+	public $class;//职业 0 杂兵
+	public $level;
+	public $race;//种族 1 人类
 	public $hp;//当前血量
 	public $mhp;//最大血量
 	public $speed;//速度，即先攻
 
-	public $battleState;//战斗状态
-	public $atkAbility;//攻击能力
-	public $critical;//暴击
-	public $damageResist;//防御能力
+	//战斗状态
+	public $position=0;//位置 0 第一排 1 第二排
+	public $attackType=0;//攻击方式 0 近战 1 远程
+	public $state=1;//状态 1 活着 0 死了
 
+	//攻击能力
+	public $damage;//伤害
+	public $hitRate;//命中
+	public $times=1;//次数
+	public $decay;//攻击衰减
+	public $realDamage=0;//真实伤害
+
+	//暴击
+	public $rate=0.01;//暴击率
+	public $criticalTimes=2;//暴击倍率
+
+	//防御能力
+	public $resist=0;//防御
+	public $resistRate=0;//比例防御
+	public $dodge=0;//闪避
+	public $magicResist=0;//法抗
+
+	//类中类
 	public $skillPower;//主动技能	
 	public $passiveSkill;//被动威力
 	public $buff;//持续效果以及回合数
 
+	//纯数组
 	public $spellStrength;//法术强度 治疗量
 	public $ranseSE;//对种族特效
 
 	public $initiative;//先攻
 
 	public function __construct(){
-		$this->battleState=new battleState();
-		$this->atkAbility=new atkAbility();
-		$this->critical=new critical();
-		$this->damageResist=new damageResist();
 
-		$this->skillPower=array();//需要另行写入数组单元
-		$this->passiveSkill=array();//同上
-		$this->buff=array();//同上
-		
-		$this->spellStrength=array();//直接标明法强和治疗
-		$this->ranseSE=array();//直接写入意味不明的数字，具体参与计算时要查表
+		$this->decay=array('1','0.5');
+		//初始化14个技能
+		for($i=0;$i<14;$i++){
+			$this->skillPower[$i]=new skillPower(0,0,0);
+		}
+		//初始化4个被动
+		for($i=0;$i<4;$i++){
+			$npc->passiveSkill[$i]=new passiveSkill(0);
+		}
+		//初始化8个buff
+		for($i=0;$i<8;$i++){
+			$npc->buff[$i]=new buff(0,0,0);
+		}
+		$this->spellStrength=array(0,0);//直接标明法强和治疗
+		$this->ranseSE=array(0,0,0,0);//直接写入意味不明的数字，具体参与计算时要查表
 
 	}
 
 	public function HPrate(){//显示血量百分比
 		return $this->healthPoint/$this->healthPointUpper;
 	}
-
-
 }
 
-//unit子类 战斗状态
-class battleState{
-	public $position;
-	public $attackType;
-	public $state;
-}
-//unit子类 攻击能力
-class atkAbility{
-	public $damage;//伤害
-	public $hitRate;//命中
-	public $time;//次数
-	public $decay=array();//攻击衰减
-	public $realDamage;//真实伤害
-}
-//unit子类 暴击能力
-class critical{
-	public $rate;//暴击率
-	public $time;//暴击倍率
-}
-//unit子类 防御能力
-class damageResist{
-	public $resist;//防御
-	public $resistRate;//比例防御
-	public $dodge;//闪避
-	public $magicResist;//法抗
-}
+
 //unit数组单元子类 主动技能
 class skillPower{
 	public $store;//技能次数 就是法术位
@@ -101,129 +99,138 @@ class buff{
 }
 
 
-//include 'initializeAttr.php';
-
-//初始化范例单位
-$npc=new unit();
-$npc->name='村民';
-$npc->side='player';
-$npc->class='commoner';
-$npc->rance='human';
-$npc->hp=$npc->mahp=100;
-$npc->speed=12;
-
-$npc->battleState->position='front';
-$npc->battleState->attackType='bayonet';
-$npc->battleState->state='live';
-
-$npc->atkAbility->damage=10;
-$npc->atkAbility->hitRate=10;
-$npc->atkAbility->time=1;
-$npc->atkAbility->decay=array();
-$npc->atkAbility->realDamage=0;
-
-$npc->critical->rate=0.01;
-$npc->critical->time=2;
-
-$npc->damageResist->resist=4;
-$npc->damageResist->resistRate=0.05;
-$npc->damageResist->dodge=5;
-$npc->damageResist->magicResist=1;
-
-//导入14个技能
-for($i=0;$i<14;$i++){
-	$npc->skillPower[$i]=new skillPower(0,0,0);
-}
-//导入8个buff与debuf
-for($i=0;$i<8;$i++){
-	$npc->buff[$i]=new buff(0,0,0);
-}
-//导入4个被动
-for($i=0;$i<4;$i++){
-	$npc->passiveSkill[$i]=new passiveSkill(0);
+//战报
+class battleReport{
+	public $title;
+	public $content;
+	function __construct($title,$content){
+		$this->title=$title;
+		$this->content=$content;
+	}
 }
 
-//初始化法强和种族特效
-$npc->spellStrength[0]=0;
-$npc->spellStrength[1]=0;
 
-for($i=0;$i<4;$i++){
-	$npc->ranseSE[$i]=0;
-}
-//初始化战斗队伍
+//初始化单位
+$battleReport=array();
 
 $unitList=array();
+for ($i=0; $i < 8; $i++) { 
+	$unitList[$i]=new unit();
+	if ($i<4) {
+		$unitList[$i]->name='村民'.$i;//单位名称
+		$unitList[$i]->side=0;//单位阵营
 
-$actionList=array();
-for ($i=0; $i < 10; $i++) { 
-	$unitList[$i]=clone $npc;
-}
-for ($i=0; $i < 5; $i++) { 
-	$unitList[$i+5]->side='computer';
-}
-
-for ($i=0; $i < count($unitList); $i++) { 
-    $actionList[$i]=clone $unitList[$i];
-    
-}
-
-/*
-第零轮
-*/
-
-
-	for ($i=0; $i < count($actionList); $i++) { 
-		$actionList[$i]->initialize=dice($actionList[$i]->speed,6);
-		echo $actionList[$i]->initialize."<br>";
 	}
-	//根据先攻值对单位进行排序，冒泡
-	for ($i=count($actionList); $i > 0; $i--) { 
-		for ($j=0; $j < $i; $j++) { 
-			if(($actionList[$j]->initialize)<($actionList[$j+1]->initialize)){
-				$part=$actionList[$j];
-				$actionList[$j]=$actionList[$j+1];
-				$actionList[$j+1]=$part;
+	else{
+		$unitList[$i]->name='哥布林'.$i;//单位名称
+		$unitList[$i]->side=1;//单位阵营
+
+	}
+	$unitList[$i]->class=0;//职业
+	$unitList[$i]->level=1;//等级
+	$unitList[$i]->race=1;//种族
+	$unitList[$i]->mhp=$unitList[$i]->hp=100;//当前血量
+	$unitList[$i]->dodge=5;
+	$unitList[$i]->speed=10;//速度，即先攻
+	$unitList[$i]->damage=10;//伤害
+	$unitList[$i]->hitRate=10;//命中
+}
+
+$round=50;//回合数
+//战斗过程
+while ( $round--) {
+	$battleReport[count($battleReport)]=new battleReport('hr',"<hr>$round<br>");
+	//产生先攻值
+	for ($i=0; $i < count($unitList); $i++) { 
+		$unitList[$i]->initiative=rand(0,$unitList[$i]->speed);
+	}
+	//先攻排序
+	for ($i=0; $i < count($unitList)-1; $i++) {
+		for ($j=0; $j < count($unitList)-$i; $j++) { 
+			if(($unitList[$j]->initiative)<($unitList[$j+1]->initiative)){
+				$temp=$unitList[$j];
+				$unitList[$j]=$unitList[$j+1];
+				$unitList[$j+1]=$temp;
 			}
 		}
-		# code...
 	}
 
-	for ($i=0; $i < count($actionList); $i++) { 
-		echo $actionList[$i]->initialize."<br>";
+	//遍历已排序的UL，完成整个战斗流程
+	for ($i=0; $i < count($unitList); $i++) { 
+		if(!$unitList[$i]->state){//行动者死亡，跳过
+			continue;
+		}
+		//选择目标
+		for(;;){
+			$p=rand(0,count($unitList)-1);
+			if($unitList[$p]->state&&$unitList[$i]->side!=$unitList[$p]->side){//目标未死亡并且与行动者阵营不同
+				$target=$unitList[$p];
+				break;
+			}/*
+			if(checkSide(0)||checkSide(1)){
+			echo "end;";
+			break;
+			}*/
+		}
+		//echo $unitList[$i]->name.'->'.$target->name.'<br>';
+		attack($unitList[$i],$target);
+		if ($target->hp<=0) {
+			$target->state=0;//你已经死了
+			$battleReport[count($battleReport)]=new battleReport('state',"$target->name die");
+
+		}
+		if(checkSide(0)||checkSide(1)){
+		break;
+		}
+
 	}
 	
-$roundTimes=20;
-while ($roundTimes--) {
-	//先攻排序
+	if(checkSide(0)||checkSide(1)){
+	echo "end;";
+	break;
+	}
 
 
-
+	
 }
 
+for ($i=0; $i < count($battleReport); $i++) { 
+	echo $battleReport[$i]->content."<br>";
+}
 
-
-/*
-function initialize($type,$name){
-	switch ($type) {
-		case '0'://怪物
-			
-			break;
-		case '1'://玩家
-
-			break;
-		
-		default:
-			# code...
-			break;
+function attack($a,$t){
+	global $battleReport;
+	if(rand(0,$a->hitRate)>$t->dodge){//命中
+		$damage=$a->damage*(1-$t->resistRate)-$t->resist+$a->realDamage;
+		if($damage>0){
+			$t->hp-=$damage;
+			$content=$a->name."对".$t->name."造成了".$damage."点伤害";
+			$battleReport[count($battleReport)]=new battleReport('action',$content);
+		}
+		else{
+			$content=$a->name."未能对".$t->name."造成伤害";
+			$battleReport[count($battleReport)]=new battleReport('action',$content);
+		}
+	}
+	else{
+		$content=$a->name."没有击中".$t->name;
+		$battleReport[count($battleReport)]=new battleReport('action',$content);
 	}
 }
-*/
-function dice($number,$type){
-	$result=0;
-	for ($i=0; $i < $number; $i++) { 
-		$result+=rand(1,$type);
+function checkSide($swift){
+	global $unitList;
+	//先假定这个阵营死绝了
+	$result=1;
+	//遍历
+	for ($i=0; $i < count($unitList); $i++) { 
+		if ($unitList[$i]->side==$swift&&$unitList[$i]->state) {//该阵营有一个活人
+			$result=0;
+		}
 	}
-	return $result;
+	return $result;//返回1 真死绝了 返回0 没死绝
 }
+
+
+
 
 ?>
