@@ -109,8 +109,9 @@ class battleReport{
 	}
 }
 
-
-//初始化单位
+/**
+测试用桩模块 初始化单位
+*/
 $battleReport=array();
 
 $unitList=array();
@@ -130,16 +131,26 @@ for ($i=0; $i < 8; $i++) {
 	$unitList[$i]->level=1;//等级
 	$unitList[$i]->race=1;//种族
 	$unitList[$i]->mhp=$unitList[$i]->hp=100;//当前血量
-	$unitList[$i]->dodge=5;
+	$unitList[$i]->dodge=5;//闪避
 	$unitList[$i]->speed=10;//速度，即先攻
 	$unitList[$i]->damage=10;//伤害
 	$unitList[$i]->hitRate=10;//命中
 }
 
-$round=50;//回合数
+for ($i=0; $i < count($unitList); $i++) { 
+	$navigateList[$i]=&$unitList[$i];
+}
+/**
+桩模块结束
+*/
+
+$round=0;//回合数
 //战斗过程
-while ( $round--) {
-	$battleReport[count($battleReport)]=new battleReport('hr',"<hr>$round<br>");
+while ( $round++<20) {
+	$battleReport[count($battleReport)]=new battleReport('round',"$round<br>");
+	for ($i=0; $i < count($unitList); $i++) { 
+		$battleReport[count($battleReport)]=new battleReport('navigate',$navigateList[$i]->name.":".$navigateList[$i]->hp."/".$navigateList[$i]->mhp);
+	}
 	//产生先攻值
 	for ($i=0; $i < count($unitList); $i++) { 
 		$unitList[$i]->initiative=rand(0,$unitList[$i]->speed);
@@ -166,34 +177,26 @@ while ( $round--) {
 			if($unitList[$p]->state&&$unitList[$i]->side!=$unitList[$p]->side){//目标未死亡并且与行动者阵营不同
 				$target=$unitList[$p];
 				break;
-			}/*
-			if(checkSide(0)||checkSide(1)){
-			echo "end;";
-			break;
-			}*/
+			}
 		}
-		//echo $unitList[$i]->name.'->'.$target->name.'<br>';
+
 		attack($unitList[$i],$target);
 		if ($target->hp<=0) {
 			$target->state=0;//你已经死了
-			$battleReport[count($battleReport)]=new battleReport('state',"$target->name die");
-
+			$battleReport[count($battleReport)]=new battleReport('down',"$target->name die");
 		}
 		if(checkSide(0)||checkSide(1)){
 		break;
 		}
-
 	}
-	
 	if(checkSide(0)||checkSide(1)){
-	echo "end;";
+	$battleReport[count($battleReport)]=new battleReport('end',"battle end");
+	$battleReport[count($battleReport)]=new battleReport('winner',checkSide(1)?'computer is the winner':'player is the winner');
+
 	break;
 	}
-
-
-	
 }
-
+//test battleReport echo
 for ($i=0; $i < count($battleReport); $i++) { 
 	echo $battleReport[$i]->content."<br>";
 }
