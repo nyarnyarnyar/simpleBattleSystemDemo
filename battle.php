@@ -3,6 +3,7 @@ class unit{
 	public $name;//单位名称
 	public $side;//单位阵营 0 玩家 1 怪物
 	public $class;//职业 0 杂兵
+	public $initiative;//最终先攻值
 	public $level;
 	public $race;//种族 1 人类
 	public $hp;//当前血量
@@ -13,6 +14,7 @@ class unit{
 	public $position=0;//位置 0 第一排 1 第二排
 	public $attackType=0;//攻击方式 0 近战 1 远程
 	public $state=1;//状态 1 活着 0 死了
+	public $actionPolicy='1';
 
 	//攻击能力
 	public $damage;//伤害
@@ -32,30 +34,28 @@ class unit{
 	public $magicResist=0;//法抗
 
 	//类中类
-	public $skillPower;//主动技能	
-	public $passiveSkill;//被动威力
+	public $skillPower;//主动技能
+	public $passiveSkill;//被动技能
 	public $buff;//持续效果以及回合数
 
 	//纯数组
 	public $spellStrength;//法术强度 治疗量
 	public $ranseSE;//对种族特效
 
-	public $initiative;//先攻
-
 	public function __construct(){
 
 		$this->decay=array('1','0.5');
 		//初始化14个技能
 		for($i=0;$i<14;$i++){
-			$this->skillPower[$i]=new skillPower(0,0,0);
+			$this->skillPower[$i]=new skillPower();
 		}
 		//初始化4个被动
 		for($i=0;$i<4;$i++){
-			$npc->passiveSkill[$i]=new passiveSkill(0);
+			$this->passiveSkill[$i]=new passiveSkill(0);
 		}
 		//初始化8个buff
 		for($i=0;$i<8;$i++){
-			$npc->buff[$i]=new buff(0,0,0);
+			$this->buff[$i]=new buff(0,0,0);
 		}
 		$this->spellStrength=array(0,0);//直接标明法强和治疗
 		$this->ranseSE=array(0,0,0,0);//直接写入意味不明的数字，具体参与计算时要查表
@@ -63,21 +63,16 @@ class unit{
 	}
 
 	public function HPrate(){//显示血量百分比
-		return $this->healthPoint/$this->healthPointUpper;
+		return $this->hp/($this->mhp);
 	}
 }
 
 
 //unit数组单元子类 主动技能
 class skillPower{
-	public $store;//技能次数 就是法术位
-	public $level;//技能威力 就是法术等级
-	public $times;//技能倍数 就是法术极效
-	public function __construct($store,$level,$times){
-		$this->store=$store;
-		$this->level=$level;
-		$this->times=$times;
-	}
+	public $store=0;//技能次数 就是法术位
+	public $level=0;//技能威力 就是法术等级
+	public $times=1;//技能倍数 就是法术极效
 }
 //unit数组单元子类 被动技能
 class passiveSkill{
@@ -112,10 +107,14 @@ class battleReport{
 /**
 测试用桩模块 初始化单位
 */
-$battleReport=array();
-
 $unitList=array();
-for ($i=0; $i < 8; $i++) { 
+$battleReport=array();
+$player=array();
+$computer=array();
+$round=0;
+
+
+for ($i=0; $i < 8; $i++) {
 	$unitList[$i]=new unit();
 	if ($i<4) {
 		$unitList[$i]->name='村民'.$i;//单位名称
@@ -123,9 +122,8 @@ for ($i=0; $i < 8; $i++) {
 
 	}
 	else{
-		$unitList[$i]->name='哥布林'.$i;//单位名称
+		$unitList[$i]->name='兽人'.($i-4);//单位名称
 		$unitList[$i]->side=1;//单位阵营
-
 	}
 	$unitList[$i]->class=0;//职业
 	$unitList[$i]->level=1;//等级
@@ -137,103 +135,142 @@ for ($i=0; $i < 8; $i++) {
 	$unitList[$i]->hitRate=10;//命中
 }
 
-for ($i=0; $i < count($unitList); $i++) { 
-	$navigateList[$i]=&$unitList[$i];
-}
-/**
-桩模块结束
-*/
+$unitList[2]->skillPower[1]->level=1;
+$unitList[2]->skillPower[1]->store=1;
+$unitList[2]->skillPower[2]->level=1;
+$unitList[2]->skillPower[2]->store=1;
+$unitList[2]->skillPower[4]->level=1;
+$unitList[2]->skillPower[4]->store=1;
 
-$round=0;//回合数
-//战斗过程
-while ( $round++<20) {
-	$battleReport[count($battleReport)]=new battleReport('round',"$round<br>");
-	for ($i=0; $i < count($unitList); $i++) { 
-		$battleReport[count($battleReport)]=new battleReport('navigate',$navigateList[$i]->name.":".$navigateList[$i]->hp."/".$navigateList[$i]->mhp);
+for($i=0;$i<count($unitList);$i++){
+	if ($unitList[$i]->side==1) {
+		$player[count($player)]=$unitList[$i];
 	}
-	//产生先攻值
-	for ($i=0; $i < count($unitList); $i++) { 
+	else {
+		$computer[count($computer)]=$unitList[$i];
+	}
+}
+
+while($round++<1){
+	for ($i=0; $i < count($unitList); $i++) { //生成先攻
 		$unitList[$i]->initiative=rand(0,$unitList[$i]->speed);
 	}
-	//先攻排序
-	for ($i=0; $i < count($unitList)-1; $i++) {
-		for ($j=0; $j < count($unitList)-$i; $j++) { 
-			if(($unitList[$j]->initiative)<($unitList[$j+1]->initiative)){
-				$temp=$unitList[$j];
-				$unitList[$j]=$unitList[$j+1];
-				$unitList[$j+1]=$temp;
+	for ($i=0; $i < count($unitList); $i++) { //先攻排序
+		for ($j=count($unitList)-1; $j >$i; $j--) { 
+			if (($unitList[$j]->initiative)<($unitList[$j-1]->initiative)) {
+				$item=$unitList[$j-1];
+				$unitList[$j-1]=$unitList[$j];
+				$unitList[$j]=$item;
 			}
 		}
 	}
 
-	//遍历已排序的UL，完成整个战斗流程
+	//action list
 	for ($i=0; $i < count($unitList); $i++) { 
-		if(!$unitList[$i]->state){//行动者死亡，跳过
-			continue;
+
+
+		//think
+		$mover=$unitList[$i];
+		$skillFlag=0;
+
+		//check skill
+		for ($j=0; $j < count($mover->skillPower); $j++) { 
+			if($mover->skillPower[$j]->level&&$mover->skillPower[$j]->store){$skillFlag=1;}
 		}
-		//选择目标
-		for(;;){
-			$p=rand(0,count($unitList)-1);
-			if($unitList[$p]->state&&$unitList[$i]->side!=$unitList[$p]->side){//目标未死亡并且与行动者阵营不同
-				$target=$unitList[$p];
-				break;
+
+		if($skillFlag*(rand(0,99)<80)){
+			skill($mover);
+		}
+		else {
+			//attack
+
+		}
+
+	}
+
+
+
+	//end round
+	
+}
+
+
+
+function skill($caster){
+	global $player,$computer;
+	for (;;) { 
+		$skill=rand(0,count($caster->skillPower)-1);
+		if ($caster->skillPower[$skill]->level&&$caster->skillPower[$skill]->store) {
+			break;
+		}
+	}
+
+	/**
+	skill
+	*/
+
+
+	$target=target($caster);
+
+
+	switch ($skill) {
+		case 0:
+		case 1:
+		case 2:
+			if ($caster->skillPower[$skill]->level<5) {
+				$harm=rand(1,100)
+				*$caster->skillPower[$skill]->level
+				*($caster->skillPower[$skill]->times)
+				*(rand(0,100)/100>$caster->rate?1:$caster->criticalTimes)
+				+$caster->realDamage;
+				$target->hp-=$harm-$target->magicResist>0?$harm-$target->magicResist:0;
+				
 			}
-		}
+			else{
+				$otherSide=$player->side==$$caster->side?$computer:$player;
+				
 
-		attack($unitList[$i],$target);
-		if ($target->hp<=0) {
-			$target->state=0;//你已经死了
-			$battleReport[count($battleReport)]=new battleReport('down',"$target->name die");
-		}
-		if(checkSide(0)||checkSide(1)){
-		break;
-		}
+			}
+			
+			break;
+		//buff
+		case 3:
+		case 4:
+		case 5:
+		case 6:
+		case 7:
+			$target=target($caster,1);
+			$target->buff[$skill-3]->level=$caster->skillPower[$skill]->level;
+			$target->buff[$skill-3]->roundTime=$caster->skillPower[$skill]->level;
+
+			break;
+		
+		default:
+			# code...
+			break;
 	}
-	if(checkSide(0)||checkSide(1)){
-	$battleReport[count($battleReport)]=new battleReport('end',"battle end");
-	$battleReport[count($battleReport)]=new battleReport('winner',checkSide(1)?'computer is the winner':'player is the winner');
 
-	break;
-	}
-}
-//test battleReport echo
-for ($i=0; $i < count($battleReport); $i++) { 
-	echo $battleReport[$i]->content."<br>";
+
+	echo $target->buff[$skill-3]->roundTime;
 }
 
-function attack($a,$t){
-	global $battleReport;
-	if(rand(0,$a->hitRate)>$t->dodge){//命中
-		$damage=$a->damage*(1-$t->resistRate)-$t->resist+$a->realDamage;
-		if($damage>0){
-			$t->hp-=$damage;
-			$content=$a->name."对".$t->name."造成了".$damage."点伤害";
-			$battleReport[count($battleReport)]=new battleReport('action',$content);
-		}
-		else{
-			$content=$a->name."未能对".$t->name."造成伤害";
-			$battleReport[count($battleReport)]=new battleReport('action',$content);
-		}
+function attack($a){
+}
+
+function target($a,$b=0){
+	global $player,$computer;
+	if ($a->side^$b) {
+		$otherSide=$computer;
 	}
 	else{
-		$content=$a->name."没有击中".$t->name;
-		$battleReport[count($battleReport)]=new battleReport('action',$content);
+		$otherSide=$player;
 	}
-}
-function checkSide($swift){
-	global $unitList;
-	//先假定这个阵营死绝了
-	$result=1;
-	//遍历
-	for ($i=0; $i < count($unitList); $i++) { 
-		if ($unitList[$i]->side==$swift&&$unitList[$i]->state) {//该阵营有一个活人
-			$result=0;
+
+	for (;;) {
+		$target=$otherSide[rand(0,count($otherSide)-1)];
+		if ($target->hp>0) {
+			break;
 		}
 	}
-	return $result;//返回1 真死绝了 返回0 没死绝
+	return $target;
 }
-
-
-
-
-?>
